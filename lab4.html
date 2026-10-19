@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Лабораторна робота - Завдання 4</title>
+</head>
+<body>
+
+    <h1>Лабораторна робота: Завдання №4</h1>
+
+    <!-- ТАБЛИЦЯ 1: Кафедри (Джерело для списку) -->
+    <h2>1. Додати Кафедру</h2>
+    <form id="departmentForm">
+        <input type="text" id="deptName" placeholder="Назва кафедри" required>
+        <button type="submit">Додати кафедру</button>
+    </form>
+    
+    <h3>Список кафедр:</h3>
+    <ul id="departmentsList"></ul>
+
+    <hr>
+
+    <!-- ТАБЛИЦЯ 2: Викладачі (Прив'язка через випадний список) -->
+    <h2>2. Додати Викладача</h2>
+    <form id="teacherForm">
+        <input type="text" id="teacherName" placeholder="ПІБ викладача" required>
+        
+        <!-- Обов'язкова вимога: Випадний список, пов'язаний з першою таблицею -->
+        <select id="teacherDept" required>
+            <option value="">--Оберіть кафедру--</option>
+        </select>
+        
+        <button type="submit">Додати викладача</button>
+    </form>
+
+    <h3>Список викладачів:</h3>
+    <ul id="teachersList"></ul>
+
+    <script>
+        // Ініціалізація даних з localStorage або створення порожніх масивів (Вимога 1 та 2)
+        let appData = JSON.parse(localStorage.getItem('lab4_data')) || {
+            departments: ["Кафедра ПІ", "Кафедра КН"], // Початкові дані для прикладу
+            teachers: []
+        };
+
+        // Елементи DOM
+        const departmentForm = document.getElementById('departmentForm');
+        const deptNameInput = document.getElementById('deptName');
+        const departmentsList = document.getElementById('departmentsList');
+
+        const teacherForm = document.getElementById('teacherForm');
+        const teacherNameInput = document.getElementById('teacherName');
+        const teacherDeptSelect = document.getElementById('teacherDept');
+        const teachersList = document.getElementById('teachersList');
+
+        // Функція збереження даних та оновлення інтерфейсу
+        function updateUIAndStorage() {
+            // 1. Збереження локально у localStorage (Вимога 1)
+            localStorage.setItem('lab4_data', JSON.stringify(appData));
+            
+            // 2. Відображення даних (Вимога 2)
+            renderDepartments();
+            renderTeachers();
+            updateDepartmentSelect();
+        }
+
+        // Рендер списку кафедр
+        function renderDepartments() {
+            departmentsList.innerHTML = '';
+            appData.departments.forEach(dept => {
+                const li = document.createElement('li');
+                li.textContent = dept;
+                departmentsList.appendChild(li);
+            });
+        }
+
+        // Рендер списку викладачів
+        function renderTeachers() {
+            teachersList.innerHTML = '';
+            appData.teachers.forEach(teacher => {
+                const li = document.createElement('li');
+                li.textContent = `${teacher.name} — ${teacher.department}`;
+                teachersList.appendChild(li);
+            });
+        }
+
+        // Оновлення випадного списку (Вимога 4: прив'язка у вигляді списку)
+        function updateDepartmentSelect() {
+            const currentSelection = teacherDeptSelect.value;
+            teacherDeptSelect.innerHTML = '<option value="">--Оберіть кафедру--</option>';
+            
+            appData.departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                teacherDeptSelect.appendChild(option);
+            });
+
+            // Зберігаємо вибір користувача, якщо він досі існує
+            if (appData.departments.includes(currentSelection)) {
+                teacherDeptSelect.value = currentSelection;
+            }
+        }
+
+        // Обробник додавання кафедри
+        departmentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newDept = deptNameInput.value.trim();
+            if (newDept && !appData.departments.includes(newDept)) {
+                appData.departments.push(newDept);
+                deptNameInput.value = '';
+                updateUIAndStorage();
+            }
+        });
+
+        // Обробник додавання викладача
+        teacherForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = teacherNameInput.value.trim();
+            const department = teacherDeptSelect.value;
+            
+            if (name && department) {
+                appData.teachers.push({ name, department });
+                teacherNameInput.value = '';
+                teacherDeptSelect.value = '';
+                updateUIAndStorage();
+            }
+        });
+
+        // Вкладка/Вікно 2, 3...: Автоматична синхронізація при змінах (Вимога 3)
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'lab4_data') {
+                // Завантажуємо нові дані, які змінили в іншій вкладці
+                appData = JSON.parse(event.newValue) || { departments: [], teachers: [] };
+                // Перемальовуємо інтерфейс поточної сторінки
+                renderDepartments();
+                renderTeachers();
+                updateDepartmentSelect();
+            }
+        });
+
+        // Перший запуск при завантаженні сторінки (Вимога 2)
+        updateUIAndStorage();
+    </script>
+</body>
+</html>
+
